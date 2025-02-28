@@ -1,142 +1,113 @@
-"use client"
+"use client";
 
-import { useState } from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { use, useState } from "react";
+import { useFormik } from "formik";
+import { z } from "zod";
+import { withZodSchema } from "formik-validator-zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "./AuthProvider";
 
-interface LoginValues {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[@$!%*?&]/, "Password must contain at least one special character (@$!%*?&)"),
+});
+
 
 export function LoginForm() {
   const { toast } = useToast();
+  const auth = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    validate: withZodSchema(loginSchema), // Use Zod validation
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
 
-  const initialValues: LoginValues = {
-    email: "",
-    password: "",
-    rememberMe: false,
-  };
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
-  const validate = (values: LoginValues) => {
-    const errors: Partial<LoginValues> = {};
+        auth?.login(values.email);
 
-    if (!values.email) {
-      errors.email = "Email is required";
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
-      errors.email = "Invalid email address";
-    }
-
-    if (!values.password) {
-      errors.password = "Password is required";
-    } else if (values.password.length < 8) {
-      errors.password = "Password must be at least 8 characters";
-    }
-
-    return errors;
-  };
-
-  const handleSubmit = async (values: LoginValues, { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }) => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log("Login values:", values);
-      
-      toast({
-        title: "Login successful",
-        description: "You have been logged in successfully.",
-      });
-      
-      // Here you would typically redirect the user or update auth state
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+        toast({
+          title: "Login successful",
+          description: "You have been logged in successfully.",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: "Please check your credentials and try again.",
+        });
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    validateOnChange: true,
+    validateOnMount: true
+  });
 
   return (
-    <Formik
-      initialValues={initialValues}
-      validate={validate}
-      onSubmit={handleSubmit}
-    >
-      {({ isSubmitting, errors, touched }) => (
-        <Form className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Field
-              as={Input}
-              id="email"
-              name="email"
-              type="email"
-              placeholder="name@example.com"
-              className={`${errors.email && touched.email ? "border-destructive" : ""}`}
-            />
-            <ErrorMessage name="email" component="div" className="text-sm text-destructive" />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Field
-                as={Input}
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                className={`${errors.password && touched.password ? "border-destructive" : ""}`}
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-            <ErrorMessage name="password" component="div" className="text-sm text-destructive" />
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Field
-              as={Checkbox}
-              id="rememberMe"
-              name="rememberMe"
-            />
-            <Label htmlFor="rememberMe" className="text-sm font-normal">
-              Remember me for 30 days
-            </Label>
-          </div>
-          
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              "Sign in"
-            )}
-          </Button>
-        </Form>
-      )}
-    </Formik>
+    <form onSubmit={formik.handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="name@example.com"
+          className={formik.errors.email && formik.touched.email ? "border-destructive" : ""}
+          {...formik.getFieldProps("email")}
+        />
+        {formik.errors.email && formik.touched.email && (
+          <div className="text-sm text-red-600">{formik.errors.email}</div>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
+            className={formik.errors.password && formik.touched.password ? "border-destructive" : ""}
+            {...formik.getFieldProps("password")}
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+        {formik.errors.password && formik.touched.password && (
+          <div className="text-sm text-red-600">{formik.errors.password}</div>
+        )}
+      </div>
+
+      <Button type="submit" className={cn("w-full !mt-10")} disabled={formik.isSubmitting || !formik.isValid}>
+        {formik.isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Signing in...
+          </>
+        ) : (
+          "Sign in"
+        )}
+      </Button>
+    </form>
   );
 }
