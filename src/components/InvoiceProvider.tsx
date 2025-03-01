@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, use } from "react";
 import { z } from "zod";
 import { useAuth } from "./AuthProvider";
 
@@ -25,7 +25,11 @@ export const InvoiceSchema = z.object({
   totalAmount: z.number().positive(),
   invoiceDescription: z.string(),
   expenses: z.array(ExpenseSchema).min(1),
-  comments: z.string()
+  comments: z.string(),
+  status: z.enum(['pending' , 'approved' , 'rejected' , 'draft']),
+  createdAt: z.string().datetime(),
+  updatedAt:  z.string().datetime(),
+  pdfUrl: z.string().nullish()
 });
 
 export type InvoiceValues = z.infer<typeof InvoiceSchema>;
@@ -35,6 +39,7 @@ type InvoiceContextType = {
   addInvoice: (data: InvoiceValues) => void;
   updateInvoice: (invoiceId: string, updatedData: Partial<InvoiceValues>) => void;
   deleteInvoice: (invoiceId: string) => void;
+  handleAction: (invoiceId: "delete" | "approve" | "reject", action: string) => void;
 };
 
 export const InvoiceContext = React.createContext<InvoiceContextType | undefined>(undefined);
@@ -44,13 +49,13 @@ const InvoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const userEmail = auth?.email;
   const storageKey = `invoices_${userEmail}`;
   
-  const [invoices, setInvoices] = useState<InvoiceValues[]>(() => {
-    if (userEmail) {
-      const storedInvoices = localStorage.getItem(storageKey);
-      return storedInvoices ? JSON.parse(storedInvoices) : [];
+  const [invoices, setInvoices] = useState<InvoiceValues[]>([]);
+
+  useEffect(() => {
+    if(userEmail){
+      setInvoices(JSON.parse(localStorage.getItem(storageKey) as string));
     }
-    return [];
-  });
+  },[userEmail])
 
   useEffect(() => {
     if (userEmail) {
@@ -70,12 +75,46 @@ const InvoiceProvider = ({ children }: { children: React.ReactNode }) => {
     );
   };
 
-  const deleteInvoice = (invoiceId: string) => {
-    setInvoices((prev) => prev.filter((invoice) => invoice.invoiceNumber !== invoiceId));
+
+
+  const approveInvoice = (invoiceId: string) => {
+    setInvoices((prev) =>
+      prev.map((invoice) =>
+        invoice.invoiceId === invoiceId ? { ...invoice, status: "approved" } : invoice
+      )
+    );
   };
 
+  const rejectInvoice = (invoiceId: string) => {
+    setInvoices((prev) =>
+      prev.map((invoice) =>
+        invoice.invoiceId === invoiceId ? { ...invoice, status: "rejected" } : invoice
+      )
+    );
+  };
+
+  const deleteInvoice = (invoiceId: string) => {
+    setInvoices((prev) => prev.filter((invoice) => invoice.invoiceId !== invoiceId));
+  };
+
+  const handleAction = (action: "delete" | "approve" | "reject", invoiceId: string) => {
+    switch (action) {
+      case "delete":
+        deleteInvoice(invoiceId);
+        break;
+      case "approve":
+        approveInvoice(invoiceId);
+        break;
+      case "reject":
+        rejectInvoice(invoiceId);
+        break;
+      default:
+        break;
+    }
+  }
+
   return (
-    <InvoiceContext.Provider value={{ invoices, addInvoice, updateInvoice, deleteInvoice }}>
+    <InvoiceContext.Provider value={{ invoices, addInvoice, updateInvoice, deleteInvoice, handleAction }}>
       {children}
     </InvoiceContext.Provider>
   );

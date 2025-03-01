@@ -32,7 +32,7 @@ export default function RootLayout({
       </div>
     </header>
 
-    {children}s
+    {children}
   </div>
   );
 }

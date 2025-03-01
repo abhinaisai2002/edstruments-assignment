@@ -1,8 +1,14 @@
+'use client'
+
+import InvoiceDashboard from "@/components/invoice-dashboard"
 
 
 const Dashboard = () => {
     return (
-        <h1>Dashboard</h1>
+        <InvoiceDashboard 
+            onCreateNew={() => {}} 
+            onEditInvoice={() => {}} 
+        />
     )
 }
 
