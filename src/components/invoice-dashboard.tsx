@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { 
-  FileText, 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreHorizontal, 
-  ArrowUpDown, 
-  CheckCircle2, 
-  Clock, 
+import {
+  FileText,
+  Plus,
+  Search,
+  Filter,
+  MoreHorizontal,
+  ArrowUpDown,
+  CheckCircle2,
+  Clock,
   AlertCircle,
   Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import {
   DropdownMenu,
@@ -36,6 +36,7 @@ import { format } from "date-fns";
 import { InvoiceValues, useInvoiceContext } from "./InvoiceProvider";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ShowPDFDialog } from "./ShowDialogPDF";
 
 
 const sampleInvoices: InvoiceValues[] = [
@@ -176,7 +177,7 @@ interface InvoiceDashboardProps {
   onEditInvoice: (invoiceId: string) => void;
 }
 
-const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({ 
+const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
   onCreateNew,
   onEditInvoice
 }) => {
@@ -192,11 +193,11 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
 
   // Filter invoices based on search term and current tab
   const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = 
+    const matchesSearch =
       invoice.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.invoiceDescription.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     if (currentTab === "all") return matchesSearch;
     return matchesSearch && invoice.status === currentTab;
   });
@@ -205,19 +206,19 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
   const sortedInvoices = [...filteredInvoices].sort((a, b) => {
     let aValue = a[sortField];
     let bValue = b[sortField];
-    
+
     // Handle numeric values
     if (typeof aValue === 'number' && typeof bValue === 'number') {
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     }
-    
+
     // Handle string values
     if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return sortDirection === 'asc' 
-        ? aValue.localeCompare(bValue) 
+      return sortDirection === 'asc'
+        ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     }
-    
+
     return 0;
   });
 
@@ -343,7 +344,7 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        {/* <div className="flex items-center gap-2 w-full md:w-auto">
           <Button variant="outline" size="sm">
             <Filter className="h-4 w-4 mr-2" />
             Filter
@@ -352,7 +353,7 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <Tabs defaultValue="all" value={currentTab} onValueChange={setCurrentTab}>
@@ -370,8 +371,8 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[100px]">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         onClick={() => handleSort('invoiceNumber')}
                         className="flex items-center p-0 h-auto font-medium"
                       >
@@ -380,8 +381,8 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
                       </Button>
                     </TableHead>
                     <TableHead>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         onClick={() => handleSort('vendor')}
                         className="flex items-center p-0 h-auto font-medium"
                       >
@@ -390,8 +391,8 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
                       </Button>
                     </TableHead>
                     <TableHead>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         onClick={() => handleSort('invoiceDate')}
                         className="flex items-center p-0 h-auto font-medium"
                       >
@@ -400,8 +401,8 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
                       </Button>
                     </TableHead>
                     <TableHead>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         onClick={() => handleSort('totalAmount')}
                         className="flex items-center p-0 h-auto font-medium"
                       >
@@ -431,10 +432,11 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => onEditInvoice(invoice.invoiceId)}>
-                                Edit
+                              <DropdownMenuItem>
+                                <ShowPDFDialog invoice={invoice}>
+                                  View PDF
+                                </ShowPDFDialog>
                               </DropdownMenuItem>
-                              <DropdownMenuItem>View PDF</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => invoiceContext?.handleAction("approve", invoice.invoiceId)}>Approve</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => invoiceContext?.handleAction("reject", invoice.invoiceId)}>Reject</DropdownMenuItem>

@@ -23,7 +23,6 @@ export default function RootLayout({
           <div className="text-sm text-muted-foreground">
             Welcome, <span className="font-medium text-foreground">{auth?.email}</span>
           </div>
-          <ThemeToggle />
           <Button variant="outline" size="sm" onClick={() => auth?.logOut()}>
             <LogOut className="h-4 w-4 mr-2" />
             Logout

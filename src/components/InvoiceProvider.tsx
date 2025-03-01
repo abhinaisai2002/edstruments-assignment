@@ -53,13 +53,15 @@ const InvoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if(userEmail){
-      setInvoices(JSON.parse(localStorage.getItem(storageKey) as string));
+      setInvoices(JSON.parse(localStorage.getItem(storageKey) as string) || []);
     }
   },[userEmail])
 
   useEffect(() => {
     if (userEmail) {
-      localStorage.setItem(storageKey, JSON.stringify(invoices));
+      console.log(invoices)
+      if(invoices)
+        localStorage.setItem(storageKey, JSON.stringify(invoices));
     }
   }, [invoices, userEmail]);
 
@@ -70,7 +72,7 @@ const InvoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const updateInvoice = (invoiceId: string, updatedData: Partial<InvoiceValues>) => {
     setInvoices((prev) =>
       prev.map((invoice) =>
-        invoice.invoiceNumber === invoiceId ? { ...invoice, ...updatedData } : invoice
+        invoice.invoiceNumber === invoiceId ? { ...invoice, ...updatedData, updatedAt: new Date().toISOString() } : invoice
       )
     );
   };
@@ -80,7 +82,7 @@ const InvoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const approveInvoice = (invoiceId: string) => {
     setInvoices((prev) =>
       prev.map((invoice) =>
-        invoice.invoiceId === invoiceId ? { ...invoice, status: "approved" } : invoice
+        invoice.invoiceId === invoiceId ? { ...invoice, status: "approved", updatedAt: new Date().toISOString() } : invoice
       )
     );
   };
@@ -88,7 +90,7 @@ const InvoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const rejectInvoice = (invoiceId: string) => {
     setInvoices((prev) =>
       prev.map((invoice) =>
-        invoice.invoiceId === invoiceId ? { ...invoice, status: "rejected" } : invoice
+        invoice.invoiceId === invoiceId ? { ...invoice, status: "rejected", updatedAt: new Date().toISOString() } : invoice
       )
     );
   };

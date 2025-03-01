@@ -86,11 +86,6 @@ const InvoiceForm: React.FC = () => {
     pdfUrl: ""
   };
 
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-    setPageNumber(1);
-  };
-
   const showToast = (title: string, description: string, type: string = "default") => {
     toast({
       title,
@@ -105,9 +100,12 @@ const InvoiceForm: React.FC = () => {
     onSubmit: (values, { setSubmitting }) => {
       try {
         // Save form data to localStorage
-        invoiceContext?.addInvoice({ ...values, status: "pending" });
+        invoiceContext?.addInvoice({ ...values, status: "pending", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), invoiceId: Date.now().toString() });
         showToast("Invoice saved", "Your invoice has been saved successfully.");
         formik.resetForm();
+
+        localStorage.removeItem("invoicePdfData");
+        localStorage.removeItem("invoiceData");
       } catch (error) {
         showToast("Error saving invoice", "There was an error saving your invoice. Please try again.", "destructive");
       } finally {
@@ -137,6 +135,7 @@ const InvoiceForm: React.FC = () => {
             return;
           }
           localStorage.setItem("invoicePdfData", base64);
+          formik.setValues({ ...formik.values, pdfUrl: base64 });
           showToast("PDF uploaded", "Your PDF has been uploaded successfully and stored aas a draft");
         } catch (error) {
           showToast("Storage error", "PDF file is too large for localStorage.", "destructive");
@@ -158,7 +157,7 @@ const InvoiceForm: React.FC = () => {
 
   useEffect(() => {
     const storedInvoice = localStorage.getItem("invoiceData") as string;
-    let invoice = { pdfUrl : ""}
+    let invoice = initialValues;
     if(storedInvoice){
       invoice = JSON.parse(storedInvoice);
     }
@@ -166,8 +165,11 @@ const InvoiceForm: React.FC = () => {
     if(storedBase64){
       invoice.pdfUrl = storedBase64
     }
-    formik.setValues(invoice as any);
+    formik.setValues(invoice);
   },[])
+
+  console.log(formik.values.pdfUrl);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
 
