@@ -501,7 +501,7 @@ const InvoiceForm: React.FC = () => {
                                   {...formik.getFieldProps(`expenses.${index}.lineAmount`)}
                                 />
                               </div>
-                              {formik.touched.expenses?.[index]?.lineAmount && formik.errors.expenses?.[index]?.lineAmount && (
+                              {formik.touched.expenses?.[index]?.lineAmount && formik.errors?.expenses?.at(index)?.lineAmount && (
                                 <div className="text-sm text-red-500">{formik.errors.expenses[index]?.lineAmount}</div>
                               )}
                             </div>
