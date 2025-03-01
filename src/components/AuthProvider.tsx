@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { createContext, useState, ReactNode, useContext, useEffect } from "react";
 
 interface AuthContextType {
@@ -12,11 +12,44 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
+const publicRoutes = ["/login"];
+
+const privateRoutes = ["/dashboard", "/invoice"];
+
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [email, setEmail] = useState<string>("");
   const loggedIn = !!email;
 
   const router = useRouter();
+
+  const path = usePathname();
+
+  useEffect(()=>{
+    if(privateRoutes.includes(path)){
+      if(!loggedIn){
+        localStorage.setItem("lastRoute", path);
+        router.push("/login");
+      }else{
+        const lastRoute = localStorage.getItem("lastRoute");
+        console.log(lastRoute, "lastRoute");
+        if(lastRoute){
+          router.push(lastRoute);
+          return;
+        }
+        router.push("/dashboard");
+      }
+    }
+    if(publicRoutes.includes(path)){
+      if(loggedIn){
+        const lastRoute = localStorage.getItem("lastRoute");
+        if(lastRoute){
+          router.push(lastRoute);
+          return;
+        }
+        router.push("/dashboard");
+      }
+    }
+  },[loggedIn])
 
   const logOut = () => {
     setEmail("");
@@ -33,6 +66,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (email: string) => {
     setEmail(email);
+    console.log(email);
     localStorage.setItem("user", email);
     router.push("/dashboard");
   };
