@@ -485,7 +485,7 @@ const InvoiceForm: React.FC = () => {
                         </div>
                       </div>
 
-                      {formik.values.expenses.map((_, index) => (
+                      {formik.values?.expenses?.map((_, index) => (
                         <div key={index} className="space-y-4 p-4 border border-gray-300 rounded-md mb-4">
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
